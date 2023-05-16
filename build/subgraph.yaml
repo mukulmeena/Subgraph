@@ -1,0 +1,240 @@
+specVersion: 0.0.5
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum
+    name: LendingPoolRegistry
+    network: mainnet
+    source:
+      address: "0x52D306e36E3B6B02c153d0266ff0f85d18BCD413"
+      abi: LendingPoolRegistry
+      startBlock: 11360925
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - AddressesProviderRegistered
+        - AddressesProviderUnregistered
+        - OwnershipTransferred
+      abis:
+        - name: LendingPoolRegistry
+          file: LendingPoolRegistry\abis\LendingPoolRegistry.json
+      eventHandlers:
+        - event: AddressesProviderRegistered(indexed address)
+          handler: handleAddressesProviderRegistered
+      file: LendingPoolRegistry\LendingPoolRegistry.wasm
+templates:
+  - kind: ethereum/contract
+    name: lendingPoolProvider
+    network: mainnet
+    source:
+      abi: LendingPoolProvider
+    mapping:
+      kind: etherium/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - LendingPoolAddressesProvider
+      abis:
+        - name: AaveIncentivesController
+          file: lendingPoolProvider\abis\AaveIncentivesController.json
+        - name: LendingPoolProvider
+          file: lendingPoolProvider\abis\lendingpoolprovider.json
+      eventHandlers:
+        - event: ProxyCreated(bytes32,indexed address)
+          handler: handleProxyCreated
+        - event: PriceOracleUpdated(indexed address)
+          handler: handlePriceOracleUpdated
+        - event: LendingPoolConfiguratorUpdated(indexed address)
+          handler: handleLendingPoolConfiguratorUpdated
+        - event: LendingPoolUpdated(indexed address)
+          handler: handleLendingPoolUpdated
+      file: LendingPoolRegistry\LendingPoolRegistry.wasm
+  - kind: ethereum/contract
+    name: lendingPool
+    network: mainnet
+    source:
+      abi: LendingPool
+    mapping:
+      kind: etherium/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Block
+        - Account
+        - Token
+        - Market
+        - Transaction
+        - Transfer
+        - Position
+        - PositionSnapshot
+      abis:
+        - name: AaveIncentivesController
+          file: lendingPool\abis\AaveIncentivesController.json
+        - name: AToken
+          file: lendingPool\abis\AToken.json
+        - name: VariableDebtToken
+          file: lendingPool\abis\VariableDebtToken.json
+        - name: StableDebtToken
+          file: lendingPool\abis\StableDebtToken.json
+        - name: LendingPool
+          file: lendingPool\abis\LendingPool.json
+        - name: ERC20
+          file: lendingPool\abis\ERC20.json
+        - name: IPriceOracleGetter
+          file: lendingPool\abis\IPriceOracleGetter.json
+        - name: PriceOracleERC20
+          file: lendingPool\abis\Prices\ERC20.json
+        - name: CurveRegistry
+          file: lendingPool\abis\Prices\Curve\Registry.json
+        - name: CurvePoolRegistry
+          file: lendingPool\abis\Prices\Curve\PoolRegistry.json
+        - name: CalculationsCurve
+          file: lendingPool\abis\Prices\Calculations\Curve.json
+        - name: YearnLensContract
+          file: lendingPool\abis\Prices\YearnLens.json
+        - name: ChainLinkContract
+          file: lendingPool\abis\Prices\ChainLink.json
+        - name: UniswapRouter
+          file: lendingPool\abis\Prices\Uniswap\Router.json
+        - name: UniswapFactory
+          file: lendingPool\abis\Prices\Uniswap\Factory.json
+        - name: UniswapPair
+          file: lendingPool\abis\Prices\Uniswap\Pair.json
+        - name: SushiSwapRouter
+          file: lendingPool\abis\Prices\SushiSwap\Router.json
+        - name: SushiSwapFactory
+          file: lendingPool\abis\Prices\SushiSwap\Factory.json
+        - name: SushiSwapPair
+          file: lendingPool\abis\Prices\SushiSwap\Pair.json
+        - name: CalculationsSushiSwap
+          file: lendingPool\abis\Prices\Calculations\SushiSwap.json
+        - name: CurvePool
+          file: lendingPool\abis\Prices\Custom\CurvePool.json
+        - name: ChainLinkAggregator
+          file: lendingPool\abis\Prices\Custom\ChainLinkAggregator.json
+      eventHandlers:
+        - event: Deposit(indexed address,address,indexed address,uint256,indexed uint16)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256)
+          handler: handleWithdraw
+        - event: Borrow(indexed address,address,indexed address,uint256,uint256,uint256,indexed
+            uint16)
+          handler: handleBorrow
+        - event: Repay(indexed address,indexed address,indexed address,uint256)
+          handler: handleRepay
+        - event: ReserveDataUpdated(indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleReserveDataUpdated
+        - event: ReserveUsedAsCollateralEnabled(indexed address,indexed address)
+          handler: handleReserveUsedAsCollateralEnabled
+        - event: ReserveUsedAsCollateralDisabled(indexed address,indexed address)
+          handler: handleReserveUsedAsCollateralDisabled
+      file: templates\lendingPool\lendingPool.wasm
+  - kind: ethereum/contract
+    name: LendingPoolConfigurator
+    network: mainnet
+    source:
+      abi: LendingPoolConfigurator
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Block
+        - Account
+        - Token
+        - Market
+        - Transaction
+        - Transfer
+        - Position
+        - PositionSnapshot
+      abis:
+        - name: AaveIncentivesController
+          file: LendingPoolConfigurator\abis\AaveIncentivesController.json
+        - name: AToken
+          file: LendingPoolConfigurator\abis\AToken.json
+        - name: LendingPoolConfigurator
+          file: LendingPoolConfigurator\abis\LendingPoolConfigurator.json
+        - name: LendingPool
+          file: LendingPoolConfigurator\abis\LendingPool.json
+        - name: ERC20
+          file: LendingPoolConfigurator\abis\ERC20.json
+        - name: ERC20NameBytes
+          file: LendingPoolConfigurator\abis\ERC20NameBytes.json
+        - name: ERC20SymbolBytes
+          file: LendingPoolConfigurator\abis\ERC20SymbolBytes.json
+        - name: IPriceOracleGetter
+          file: LendingPoolConfigurator\abis\IPriceOracleGetter.json
+        - name: PriceOracleERC20
+          file: LendingPoolConfigurator\abis\Prices\ERC20.json
+        - name: CurveRegistry
+          file: LendingPoolConfigurator\abis\Prices\Curve\Registry.json
+        - name: CurvePoolRegistry
+          file: LendingPoolConfigurator\abis\Prices\Curve\PoolRegistry.json
+        - name: CalculationsCurve
+          file: LendingPoolConfigurator\abis\Prices\Calculations\Curve.json
+        - name: YearnLensContract
+          file: LendingPoolConfigurator\abis\Prices\YearnLens.json
+        - name: ChainLinkContract
+          file: LendingPoolConfigurator\abis\Prices\ChainLink.json
+        - name: UniswapRouter
+          file: LendingPoolConfigurator\abis\Prices\Uniswap\Router.json
+        - name: UniswapFactory
+          file: LendingPoolConfigurator\abis\Prices\Uniswap\Factory.json
+        - name: UniswapPair
+          file: LendingPoolConfigurator\abis\Prices\Uniswap\Pair.json
+        - name: SushiSwapRouter
+          file: LendingPoolConfigurator\abis\Prices\SushiSwap\Router.json
+        - name: SushiSwapFactory
+          file: LendingPoolConfigurator\abis\Prices\SushiSwap\Factory.json
+        - name: SushiSwapPair
+          file: LendingPoolConfigurator\abis\Prices\SushiSwap\Pair.json
+        - name: CalculationsSushiSwap
+          file: LendingPoolConfigurator\abis\Prices\Calculations\SushiSwap.json
+        - name: CurvePool
+          file: LendingPoolConfigurator\abis\Prices\Custom\CurvePool.json
+        - name: ChainLinkAggregator
+          file: LendingPoolConfigurator\abis\Prices\Custom\ChainLinkAggregator.json
+      eventHandlers:
+        - event: ReserveInitialized(indexed address,indexed address,address,address,address)
+          handler: handleReserveInitialized
+        - event: CollateralConfigurationChanged(indexed address,uint256,uint256,uint256)
+          handler: handleCollateralConfigurationChanged
+        - event: BorrowingEnabledOnReserve(indexed address,bool)
+          handler: handleBorrowingEnabledOnReserve
+        - event: BorrowingDisabledOnReserve(indexed address)
+          handler: handleBorrowingDisabledOnReserve
+        - event: ReserveActivated(indexed address)
+          handler: handleReserveActivated
+        - event: ReserveDeactivated(indexed address)
+          handler: handleReserveDeactivated
+        - event: ReserveFactorChanged(indexed address,uint256)
+          handler: handleReserveFactorChanged
+      file: templates\LendingPoolConfigurator\LendingPoolConfigurator.wasm
+  - kind: ethereum/contract
+    name: AToken
+    network: mainnet
+    source:
+      abi: AToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - AToken
+      abis:
+        - name: AToken
+          file: AToken\abis\AToken.json
+        - name: AaveIncentivesController
+          file: AToken\abis\AaveIncentivesController.json
+        - name: LendingPool
+          file: AToken\abis\LendingPool.json
+        - name: IPriceOracleGetter
+          file: AToken\abis\IPriceOracleGetter.json
+      eventHandlers:
+        - event: Burn(indexed address,indexed address,uint256,uint256)
+          handler: handleATokenBurn
+        - event: Mint(indexed address,uint256,uint256)
+          handler: handleATokenMint
+      file: templates\AToken\AToken.wasm
