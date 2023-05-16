@@ -1,0 +1,362 @@
+enum Network {
+  ARBITRUM_ONE
+  AURORA
+  AVALANCHE
+  BSC # aka BNB Chain
+  CELO
+  MAINNET # Ethereum Mainnet
+  FANTOM
+  FUSE
+  MOONBEAM
+  MOONRIVER
+  NEAR_MAINNET
+  OPTIMISM
+  MATIC # aka Polygon
+  XDAI # aka Gnosis Chain
+}
+
+enum NFTType {
+  EMPIRE_OF_LIGHT
+  ROUGHROCK_WEALD
+  ZEN_ALLEY
+  PIRATE_BAY
+  ACADEMY_OF_MYSTERIA
+  INFERNO
+  FROZEN_NECROPOLIS
+}
+
+enum NFTRarity {
+  LEGENDARY
+  EPIC
+  RARE
+  COMMON
+  UNKNOWN
+}
+
+enum OrderStatus {
+  LISTED
+  UNLISTED
+  COMPLETED
+}
+
+#############################
+####### Game Metadata #######
+#############################
+
+type Game @entity {
+  " { Name Of the Game } "
+  id: ID!
+
+  " Name of the Game, including version. e.g. BinaryX "
+  name: String!
+
+  " Version of the subgraph schema, in SemVer format (e.g. 1.0.0) "
+  schemaVersion: String!
+
+  " Version of the subgraph implementation, in SemVer format (e.g. 1.0.0) "
+  subgraphVersion: String!
+
+  " The blockchain network this subgraph is indexing on "
+  network: Network!
+
+  ##### Quantitative Data ######
+  " Revenue claimed by Users of the Game "
+  cumulativeUsersRevenueUSD: BigDecimal!
+
+  " Gross revenue for the Game (revenue claimed by Game) "
+  cumulativeGameSideRevenueUSD: BigDecimal!
+
+  " # of cumulative unique users "
+  cumulativeUniqueUsers: Int!
+
+  ##### Snapshots #####
+  " Daily usage metrics for this protocol "
+  dailyMetrics: [MetricsDailySnapshot!]!
+    @derivedFrom(field: "game")
+
+  " Hourly usage metrics for this protocol "
+  hourlyMetrics: [MetricsHourlySnapshot!]!
+    @derivedFrom(field: "game")
+
+  # " Daily financial metrics for this protocol "
+  # financialMetrics: [FinancialsDailySnapshot!]! @derivedFrom(field: "game")
+}
+
+#############################
+####### Token Metadata ######
+#############################
+
+type Token @entity {
+  " Smart contract address of the token "
+  id: ID!
+
+  " Name of the token, mirrored from the smart contract "
+  name: String!
+
+  " Symbol of the token, mirrored from the smart contract "
+  symbol: String!
+
+  " The number of decimal places this token uses, default to 18 "
+  decimals: BigInt!
+
+  # " Optional field to track the price of a token, mostly for caching purposes "
+  # lastPriceUSD: BigDecimal!
+}
+
+type Currency @entity {
+  " { Smart contract address of the market tradeable currency token } "
+  id: ID!
+
+  " Reference to the actual token "
+  token: Token!
+
+  market: Marketplace!
+}
+
+#############################
+######## NFT Metadata #######
+#############################
+
+interface NFT {
+  " { NFT contract address }-{ Token ID } "
+  id: ID!
+  
+  hash: String!
+
+  " Token ID "
+  tokenId: BigInt!
+
+  # " Type of the Token "
+  # type: NFTType!
+
+  " Current Owner of the NFT "
+  owner: User!
+  price: BigDecimal!
+
+  " Initial mint Owner of the NFT "
+  mintOwner: User!
+
+  # " Rarity of the NFT "
+  # rarity: NFTRarity!
+
+  " Creation block number "
+  createdBlockNumber: BigInt!
+
+  " Creation timestamp "
+  createdTimestamp: BigInt!
+}
+
+type Card implements NFT @entity {
+  " { NFT contract address }-{ Token ID } "
+  id: ID!
+
+  " Transaction hash of the transaction that minted this token "
+  hash: String!
+
+  " Token ID "
+  tokenId: BigInt!
+
+  # " Type of the Token "
+  # type: NFTType!
+
+  # " Rarity of the NFT "
+  # rarity: NFTRarity!
+
+  " Current Owner of the NFT "
+  owner: User!
+  price: BigDecimal!
+
+  " Initial mint Owner of the NFT "
+  mintOwner: User!
+
+  " Creation block number "
+  createdBlockNumber: BigInt!
+
+  " Creation timestamp "
+  createdTimestamp: BigInt!
+}
+
+#############################
+#### Marketplace Metadata ###
+#############################
+
+type Marketplace @entity {
+  " Smart contract address of the Market "
+  id: ID!
+  
+  " The Game this marketplace belongs to "
+  game: Game!
+
+  " Currencies using which the Marketplace Operates "
+  currencies: [Currency!]! @derivedFrom(field: "market")
+
+  " Creation timestamp "
+  createdTimestamp: BigInt!
+  
+  " Creation block number "
+  createdBlockNumber: BigInt!
+
+  # " Marketplace entity last update timestamp "
+  # lastUpdated: BigInt!
+
+  ##### Events #####
+  " All Orders made in this Marketplace "
+  orders: [Order!]! @derivedFrom(field: "market")
+}
+
+type Order @entity {
+  " { Transaction hash }-{ Log index } "
+  id: ID!
+
+  " Transaction hash of the transaction that emitted NFT Listing event "
+  listedHash: String!
+
+  " Transaction hash of the transaction that emitted NFT Sold event "
+  soldHash: String!
+
+  " The protocol this transaction belongs to "
+  game: Game!
+
+  seller: User!
+  buyer: User!
+
+  " NFT selling currency "
+  currency: Currency!
+
+  soldPrice: BigInt!
+  soldpriceUSD: BigDecimal!
+
+  nft: NFT!
+
+  status: OrderStatus!
+
+  market: Marketplace!
+
+}
+###############################
+####### Game Timeseries #######
+###############################
+
+type MetricsHourlySnapshot @entity {
+  " { Number of hours since Unix epoch time } "
+  id: ID!
+
+  " Game this snapshot is associated with "
+  game: Game!
+
+  hourlyActiveUsers: Int!
+
+  cumulativeUniqueUsers: Int!
+
+  hourlyNewUsersCount: Int!
+
+  hourlyTransactionCount: Int!
+
+  hourlyNFTSoldCount: Int!
+
+  hourlyNFTListingCount: Int!
+
+  hourlyNFTUnListingCount: Int!
+  
+  hourlyNFTMintingCount: Int!
+
+  blockNumber: BigInt!
+
+  timestamp: BigInt! 
+}
+
+type MetricsDailySnapshot @entity {
+  " { Number of Days since Unix epoch time } "
+  id: ID!
+
+  " Game this snapshot is associated with "
+  game: Game!
+
+  dailyActiveUsers: Int!
+
+  cumulativeUniqueUsers: Int!
+
+  dailyNewUsersCount: Int!
+
+  dailyTransactionCount: Int!
+
+  dailyNFTSoldCount: Int!
+
+  dailyNFTListingCount: Int!
+
+  dailyNFTUnListingCount: Int!
+
+  dailyNFTMintingCount: Int!
+
+  " Last updated Block number of this snapshot "
+  blockNumber: BigInt!
+
+  " Last updated Timestamp of this snapshot "
+  timestamp: BigInt!
+}
+
+# type FinancialsDailySnapshot @entity {
+#   " { Number of days since Unix epoch time } "
+#   id: ID!
+
+#   " Game this snapshot is associated with "
+#   game: Game!
+
+#   " Revenue claimed by Users of the Game. NFT sellers on OpenSea. "
+#   dailyUsersRevenueUSD: BigDecimal!
+
+#   " Revenue claimed by Users of the Game. NFT sellers on OpenSea. "
+#   cumulativeUsersRevenueUSD: BigDecimal!
+
+#   " Gross revenue for the Game (revenue claimed by Game). Examples: OpenSea 10% sell fee. "
+#   dailyGameSideRevenueUSD: BigDecimal!
+
+#   " Gross revenue for the Game (revenue claimed by Game). Examples: OpenSea 10% sell fee. "
+#   cumulativeGameSideRevenueUSD: BigDecimal!
+
+#   " Last updated Block number of this snapshot "
+#   blockNumber: BigInt!
+
+#   " Last updated Timestamp of this snapshot "
+#   timestamp: BigInt!
+# }
+
+###############################
+######## User Account #########
+###############################
+
+type User @entity {
+  " Address of the account "
+  id: ID!
+
+  " Total money invested by the User "
+  investmentUSD: BigDecimal!
+
+  " Profit realized by the User "
+  realizedProfitUSD: BigDecimal!
+
+  " Current NFT Holdings "
+  nfts: [NFT!]! @derivedFrom(field: "owner")
+
+  nftsCount: Int!
+
+  " NFT's minted by the User "
+  nftsMinted: [NFT!]! @derivedFrom(field: "mintOwner")
+
+  nftsMintedCount: Int!
+
+  " NFT's sold by the user "
+  sellOrders: [Order!]! @derivedFrom(field: "seller")
+
+  " NFT's bought by the user "
+  buyOrders: [Order!]! @derivedFrom(field: "buyer")
+
+  blockNumber: BigInt!
+
+  timestamp: BigInt!
+}
+
+type ActiveUser @entity{
+  " { daily/hourly }-{ Address of the account }-{ Days/hours since Unix epoch } "
+  id: ID!
+}
